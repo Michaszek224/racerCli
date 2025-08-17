@@ -62,12 +62,16 @@ func main() {
 
 	//clearing temirnal
 	fmt.Print("\033[H\033[2J")
+	//clear after the game is over
+	defer fmt.Print("\033[H\033[2J")
 
 	//launching interputing func
 	go interuptFunc()
 
 	//Hidding the cursor
 	fmt.Print("\033[?25l")
+	//Restor the cursor after
+	defer fmt.Print("\033[?25h")
 
 	//Making the borders
 	for i := range height {
