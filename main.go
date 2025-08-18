@@ -2,8 +2,11 @@
 - deleting racer tail ->done
 - borders ->done
 - handling collision ->done
+- final destination->done
 - random bariers
-- final destination
+- some kind of points
+- game restart after lose or win
+-
 */
 
 package main
