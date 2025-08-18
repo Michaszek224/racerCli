@@ -6,7 +6,7 @@
 - some kind of points ->done
 - game restart after lose or win ->done
 - table score instead of admin panel ->done
-- change speed according to level diff
+- change speed according to level diff -> done
 - local db to store best scores
 - random bariers
 - timer
@@ -47,6 +47,7 @@ var destination Point
 var dir Point
 var score int
 var oldRacer Point
+var timeValue int
 
 func interuptFunc() {
 	//Getting input from user
@@ -80,8 +81,8 @@ func generateMap() {
 
 func generateDestination() {
 	destination = Point{
-		rand.IntN(width-1) + offset,
-		rand.IntN(height-1) + offset,
+		rand.IntN(width-2) + offset + 1,
+		rand.IntN(height-2) + offset + 1,
 	}
 	fmt.Printf("\033[%d;%dH?", destination.y, destination.x)
 }
@@ -121,7 +122,7 @@ func main() {
 	dir = Point{0, 0}
 
 	//base value of stop timer
-	timeValue := 70
+	timeValue = 70
 
 	//clearing temirnal
 	fmt.Print("\033[H\033[2J")
@@ -174,26 +175,25 @@ func main() {
 		// Logging
 		fmt.Printf("\033[%d;%dHScore Table", 9, 100)
 		fmt.Printf("\033[%d;%dHHighest Score: %d", 10, 100, score)
-		fmt.Printf("\033[%d;%dHCurrent Score: %d", 11, 100, score)
+		fmt.Printf("\033[%d;%dHCurrent Score: %d", 11, 100, timeValue)
 
 		// Handle input
 		select {
 		case char := <-keys:
 			switch char {
 			case 'w':
-				timeValue = 70
+				timeValue = 70 - score //using + score to increase diff
 				dir = Point{0, -1}
 			case 's':
-				timeValue = 70
+				timeValue = 70 - score
 				dir = Point{0, 1}
 			case 'a':
-				timeValue = 50
+				timeValue = 50 - score
 				dir = Point{-1, 0}
 			case 'd':
-				timeValue = 50
+				timeValue = 50 - score
 				dir = Point{1, 0}
 			case 'x':
-				timeValue = 50
 				dir = Point{0, 0}
 			case 'p':
 				endProgram("Endend using command")
