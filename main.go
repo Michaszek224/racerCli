@@ -1,8 +1,18 @@
+/*
+to add :
+- deleting racer tail ->done
+- borders ->done
+- handling collision ->done
+- random bariers
+- final destination
+*/
+
 package main
 
 import (
 	"fmt"
 	"log"
+	"slices"
 	"time"
 
 	"github.com/eiannone/keyboard"
@@ -17,6 +27,9 @@ type Point struct {
 	x, y int
 }
 
+var keys chan rune
+var barriers []Point
+
 func interuptFunc() {
 	//Function for getting input from user
 	for {
@@ -29,17 +42,11 @@ func interuptFunc() {
 	}
 }
 
-var keys chan rune
-
-/*
-to add :
-- deleting racer tail ->done
-- borders ->done
-- map of points where user was
-- random bariers
-- final destination
-- game go to 0 when user go into wall or previous point
-*/
+func endProgram(message string) {
+	fmt.Print("\033[H\033[2J")
+	fmt.Print("\033[?25h")
+	fmt.Println(message)
+}
 
 func main() {
 	err := keyboard.Open()
@@ -62,8 +69,6 @@ func main() {
 
 	//clearing temirnal
 	fmt.Print("\033[H\033[2J")
-	//clear after the game is over
-	defer fmt.Print("\033[H\033[2J")
 
 	//launching interputing func
 	go interuptFunc()
@@ -74,23 +79,29 @@ func main() {
 	defer fmt.Print("\033[?25h")
 
 	//Making the borders
-	for i := range height {
-		for j := range width {
-			fmt.Printf("\033[%d;%dH#", i+2, j+2)
-		}
-	}
-	for i := 1; i < height-1; i++ {
-		for j := 1; j < width-1; j++ {
-			fmt.Printf("\033[%d;%dH ", i+2, j+2)
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			if i == 0 || i == height-1 || j == 0 || j == width-1 {
+				// Border
+				fmt.Printf("\033[%d;%dH#", i+2, j+2)
+				barriers = append(barriers, Point{j + 2, i + 2})
+			}
 		}
 	}
 
 	for {
+		//Handling collision
+		if slices.Contains(barriers, racer) {
+			endProgram("You lose")
+			break
+		}
+
 		//Clean old racer
 		fmt.Printf("\033[%d;%dH ", oldRacer.y, oldRacer.x)
 
 		// Move racer
 		racer = Point{racer.x + dir.x, racer.y + dir.y}
+
 		oldRacer = racer
 
 		// Draw racer
@@ -113,6 +124,7 @@ func main() {
 				timeValue = 50
 				dir = Point{1, 0}
 			case 'p':
+				endProgram("Endend using command")
 				return
 			}
 		default:
