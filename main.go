@@ -3,12 +3,17 @@
 - borders ->done
 - handling collision ->done
 - final destination->done
-- random bariers
-- some kind of points
-- game restart after lose or win
-- timer
+- some kind of points ->done
+- game restart after lose or win ->done
+- table score instead of admin panel ->done
 - local db to store best scores
-- table score instead of admin panel
+- random bariers
+- timer
+*/
+
+/*Bug to fix:
+- after colission with border old destination do not remove itself and barrier do not regenerate -> fixed
+
 */
 
 package main
@@ -35,6 +40,11 @@ type Point struct {
 
 var keys chan rune
 var barriers []Point
+var racer Point
+var destination Point
+var dir Point
+var score int
+var oldRacer Point
 
 func interuptFunc() {
 	//Getting input from user
@@ -54,6 +64,44 @@ func endProgram(message string) {
 	fmt.Println(message)
 }
 
+func generateMap() {
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			if i == 0 || i == height-1 || j == 0 || j == width-1 {
+				// Border
+				fmt.Printf("\033[%d;%dH#", i+offset, j+offset)
+				barriers = append(barriers, Point{j + offset, i + offset})
+			}
+		}
+	}
+}
+
+func generateDestination() {
+	destination = Point{
+		rand.IntN(width-1) + offset,
+		rand.IntN(height-1) + offset,
+	}
+	fmt.Printf("\033[%d;%dH?", destination.y, destination.x)
+}
+
+func cleanMap() {
+	for i := 1; i < height-1; i++ {
+		for j := 1; j < width-1; j++ {
+			fmt.Printf("\033[%d;%dH ", i+offset, j+offset)
+		}
+	}
+}
+
+func newRound(currentScore int) {
+	generateMap()
+	cleanMap()
+	racer = Point{5, 5}
+	oldRacer = Point{5, 5}
+	dir = Point{0, 0}
+	generateDestination()
+	score = currentScore
+}
+
 func main() {
 	err := keyboard.Open()
 	if err != nil {
@@ -64,11 +112,11 @@ func main() {
 	keys = make(chan rune)
 
 	//base location of racer
-	racer := Point{5, 5}
-	oldRacer := Point{5, 5}
+	racer = Point{5, 5}
+	oldRacer = Point{5, 5}
 
 	//base direction of racer
-	dir := Point{0, 0}
+	dir = Point{0, 0}
 
 	//base value of stop timer
 	timeValue := 70
@@ -85,34 +133,24 @@ func main() {
 	defer fmt.Print("\033[?25h")
 
 	//Making the borders
-	for i := 0; i < height; i++ {
-		for j := 0; j < width; j++ {
-			if i == 0 || i == height-1 || j == 0 || j == width-1 {
-				// Border
-				fmt.Printf("\033[%d;%dH#", i+offset, j+offset)
-				barriers = append(barriers, Point{j + offset, i + offset})
-			}
-		}
-	}
-	//Radnom destination
-	destination := Point{
-		rand.IntN(width-1) + offset,
-		rand.IntN(height-1) + offset,
-	}
+	generateMap()
 
-	fmt.Printf("\033[%d;%dH?", destination.y, destination.x)
+	//Radnom destination
+	generateDestination()
+
+	score = 0
 
 	for {
 		//Handling collision
 		if slices.Contains(barriers, racer) {
-			endProgram("You lose")
-			break
+			newRound(0)
+			continue
 		}
 
 		//Handling win condition
 		if racer.x == destination.x && racer.y == destination.y {
-			endProgram("You win")
-			break
+			newRound(score + 1)
+			continue
 		}
 
 		//Clean old racer
@@ -132,9 +170,9 @@ func main() {
 		fmt.Printf("\033[%d;%dHA                                ", 11, 100)
 
 		// Logging
-		fmt.Printf("\033[%d;%dHAdmin Table", 9, 100)
-		fmt.Printf("\033[%d;%dHDestination x= %d, y=%d", 10, 100, destination.x, destination.y)
-		fmt.Printf("\033[%d;%dHCurrent Racer Postiion x=%d, y=%d", 11, 100, racer.x, racer.y)
+		fmt.Printf("\033[%d;%dHScore Table", 9, 100)
+		fmt.Printf("\033[%d;%dHHighest Score: %d", 10, 100, score)
+		fmt.Printf("\033[%d;%dHCurrent Score: %d", 11, 100, score)
 
 		// Handle input
 		select {
