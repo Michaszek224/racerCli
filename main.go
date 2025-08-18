@@ -1,5 +1,4 @@
-/*
-to add :
+/*to add :
 - deleting racer tail ->done
 - borders ->done
 - handling collision ->done
@@ -31,7 +30,7 @@ var keys chan rune
 var barriers []Point
 
 func interuptFunc() {
-	//Function for getting input from user
+	//Getting input from user
 	for {
 		char, _, err := keyboard.GetKey()
 		if err != nil {
