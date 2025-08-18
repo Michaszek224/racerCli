@@ -6,7 +6,9 @@
 - random bariers
 - some kind of points
 - game restart after lose or win
--
+- timer
+- local db to store best scores
+- table score instead of admin panel
 */
 
 package main
