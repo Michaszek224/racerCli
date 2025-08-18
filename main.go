@@ -15,7 +15,6 @@
 
 /*Bug to fix:
 - after colission with border old destination do not remove itself and barrier do not regenerate -> fixed
-
 */
 
 package main
