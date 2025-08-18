@@ -6,9 +6,11 @@
 - some kind of points ->done
 - game restart after lose or win ->done
 - table score instead of admin panel ->done
+- change speed according to level diff
 - local db to store best scores
 - random bariers
 - timer
+- add some kind of online score table
 */
 
 /*Bug to fix:
