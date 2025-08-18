@@ -11,6 +11,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"slices"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 const (
 	height = 20
 	width  = 50
+	offset = 2
 )
 
 type Point struct {
@@ -64,7 +66,7 @@ func main() {
 	dir := Point{0, 0}
 
 	//base value of stop timer
-	timeValue := 50
+	timeValue := 70
 
 	//clearing temirnal
 	fmt.Print("\033[H\033[2J")
@@ -82,16 +84,29 @@ func main() {
 		for j := 0; j < width; j++ {
 			if i == 0 || i == height-1 || j == 0 || j == width-1 {
 				// Border
-				fmt.Printf("\033[%d;%dH#", i+2, j+2)
-				barriers = append(barriers, Point{j + 2, i + 2})
+				fmt.Printf("\033[%d;%dH#", i+offset, j+offset)
+				barriers = append(barriers, Point{j + offset, i + offset})
 			}
 		}
 	}
+	//Radnom destination
+	destination := Point{
+		rand.IntN(width-1) + offset,
+		rand.IntN(height-1) + offset,
+	}
+
+	fmt.Printf("\033[%d;%dH?", destination.y, destination.x)
 
 	for {
 		//Handling collision
 		if slices.Contains(barriers, racer) {
 			endProgram("You lose")
+			break
+		}
+
+		//Handling win condition
+		if racer.x == destination.x && racer.y == destination.y {
+			endProgram("You win")
 			break
 		}
 
@@ -104,7 +119,17 @@ func main() {
 		oldRacer = racer
 
 		// Draw racer
-		fmt.Printf("\033[%d;%dH`", racer.y, racer.x)
+		fmt.Printf("\033[%d;%dH@", racer.y, racer.x)
+
+		//Clearing old logs
+		fmt.Printf("\033[%d;%dH            ", 9, 100)
+		fmt.Printf("\033[%d;%dHA                                ", 10, 100)
+		fmt.Printf("\033[%d;%dHA                                ", 11, 100)
+
+		// Logging
+		fmt.Printf("\033[%d;%dHAdmin Table", 9, 100)
+		fmt.Printf("\033[%d;%dHDestination x= %d, y=%d", 10, 100, destination.x, destination.y)
+		fmt.Printf("\033[%d;%dHCurrent Racer Postiion x=%d, y=%d", 11, 100, racer.x, racer.y)
 
 		// Handle input
 		select {
@@ -122,6 +147,9 @@ func main() {
 			case 'd':
 				timeValue = 50
 				dir = Point{1, 0}
+			case 'x':
+				timeValue = 50
+				dir = Point{0, 0}
 			case 'p':
 				endProgram("Endend using command")
 				return
