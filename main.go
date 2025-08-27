@@ -7,10 +7,7 @@
 - game restart after lose or win ->done
 - table score instead of admin panel ->done
 - change speed according to level diff -> done
-- local db to store best scores
-- random bariers
-- timer
-- add some kind of online score table
+- local db to store best scores -> done
 */
 
 /*Bug to fix:
@@ -20,6 +17,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -27,6 +25,7 @@ import (
 	"time"
 
 	"github.com/eiannone/keyboard"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
@@ -104,7 +103,56 @@ func newRound(currentScore int) {
 	score = currentScore
 }
 
+func initDb() *sql.DB {
+	db, err := sql.Open("sqlite3", "scores.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS bestScore(
+			id INTEGER PRIMARY KEY CHECK (id=1),
+			score INTEGER NOT NULL,
+			date TEXT NOT NULL
+			);
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = db.Exec(`
+		INSERT OR IGNORE INTO bestScore (id, score, date)
+		VALUES (1, 0, datetime('now'));
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
+
+func getDb(db *sql.DB) (int, string) {
+	var score int
+	var date string
+	err := db.QueryRow("SELECT score, date FROM bestScore where id = 1").Scan(&score, &date)
+	if err != nil {
+		return 0, time.Now().Format("2006-01-02")
+	}
+	return score, date
+}
+
+func updateDb(db *sql.DB, newScore int) {
+	_, err := db.Exec("UPDATE bestScore SET score = ?, date = datetime('now') WHERE id = 1", newScore)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
+	db := initDb()
+	defer db.Close()
+
+	bestScore, bestDate := getDb(db)
+
 	err := keyboard.Open()
 	if err != nil {
 		log.Fatal(err)
@@ -151,6 +199,10 @@ func main() {
 
 		//Handling win condition
 		if racer.x == destination.x && racer.y == destination.y {
+			if score+1 > bestScore {
+				updateDb(db, score+1)
+				bestScore, bestDate = getDb(db)
+			}
 			newRound(score + 1)
 			continue
 		}
@@ -173,8 +225,8 @@ func main() {
 
 		// Logging
 		fmt.Printf("\033[%d;%dHScore Table", 9, 100)
-		fmt.Printf("\033[%d;%dHHighest Score: %d", 10, 100, score)
-		fmt.Printf("\033[%d;%dHCurrent Score: %d", 11, 100, timeValue)
+		fmt.Printf("\033[%d;%dHHighest Score: %d (%s)", 10, 100, bestScore, bestDate)
+		fmt.Printf("\033[%d;%dHCurrent Score: %d", 11, 100, score)
 
 		// Handle input
 		select {
